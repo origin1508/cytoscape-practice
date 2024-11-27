@@ -95,80 +95,89 @@ function main() {
   // 기본적으로 CSS 선택자 가능
   // 쿼리를 사용해 data 프로퍼티로 특정 요소들만 선택이 가능함
   const mainLayout = cy.layout(dagreLayout);
-  const endPointLayout = cy
-    .elements()
-    .not("#controller #dtr")
-    .layout(fcoseLayout);
-
+  const endPointLayout = cy.nodes().layout(fcoseLayout);
+  // const endPointLayout = cy.nodes().not("#controller").layout(fcoseLayout);
   // const endPointLayout = cy.nodes('[group = "endPoint"]').layout(fcoseLayout);
+  // const endPointLayout = cy.$('[group = "endPoint"]').layout(fcoseLayout);
 
   // 선택한 요소들로 layout을 따로 적용이 가능함
   mainLayout.run();
   endPointLayout.run();
 
-  console.log("elements not", cy.elements().not("#controller #dtr"));
-  console.log("node $", cy.nodes('[group = "endPoint"]'));
-
   // const nav = cy.navigator(navigatorDefaults);
-  const eh = cy.edgehandles(ehDefault);
 
   // popper handle
-  let ehNode;
-  let isStarted = false;
-  const popperHandle = document.createElement("div");
-  const ehStart = () => {
-    if (ehNode) {
-      eh.start(ehNode);
-    }
-  };
+  const ehManager = {
+    eh: cy.edgehandles(ehDefault),
+    targetNode: null,
+    popperHandle: document.createElement("div"),
+    isStarted: false,
 
-  const ehStop = () => {
-    if (ehNode) {
-      eh.stop();
-      popperHandle.classList.add("hidden");
-      isStarted = false;
-    }
-  };
+    ehStart: function () {
+      console.log(ehManager);
+      if (ehManager.targetNode) {
+        ehManager.eh.start(ehManager.targetNode);
+      }
+    },
 
-  // handle 생성 시 zoom 배율에 맞춰 크기를 조절해야함
-  // handle 생성 관련 로직 수정 필요
-  popperHandle.addEventListener("mousedown", (e) => {
-    // 드래그 방지
-    e.preventDefault();
-    // edge 그리기 시작
-    ehStart();
-  });
-  popperHandle.classList.add("popper-handle", "hidden");
-  document.body.appendChild(popperHandle);
+    ehStop: function () {
+      if (ehManager.targetNode) {
+        ehManager.eh.stop();
+        ehManager.popperHandle.classList.add("hidden");
+        ehManager.isStarted = false;
+      }
+    },
 
-  window.addEventListener("mouseup", ehStop);
-  cy.$("nodes").on("mouseover", (e) => {
-    if (!isStarted) {
-      isStarted = true;
-      ehNode = e.target;
-      popperHandle.classList.remove("hidden");
-      // edge handle 생성
-      ehNode.popper({
-        content: popperHandle,
-        popper: {
-          placement: "top",
-          middleware: [offset(5)],
-        },
+    // handle 요소 생성 함수
+    // handle의 크기를 zoom 배율에 맞춰 크기 조절 필요
+    // handle 생성 관련 로직 수정 필요 -> 잔상
+    initPopperHandle: function () {
+      ehManager.popperHandle.addEventListener("mousedown", (e) => {
+        // 드래그 방지
+        e.preventDefault();
+        // edge 그리기 시작
+        ehManager.ehStart();
       });
-    }
-  });
-  // node를 집었을 때 edge 생성 모드 중단
-  cy.$("nodes").on("grap", ehStop);
-  // 화면을 줌, pa
-  cy.on("zoom pan", ehStop);
+      // popper-handle 클래스 추가
+      // 초기 보이지 않도록 hidden 클래스 추가
+      ehManager.popperHandle.classList.add("popper-handle", "hidden");
+      document.body.appendChild(ehManager.popperHandle);
+    },
 
-  function drag() {
+    displayPopperHandle: function (e) {
+      if (!ehManager.isStarted) {
+        ehManager.isStarted = true;
+        ehManager.targetNode = e.target;
+        ehManager.popperHandle.classList.remove("hidden");
+
+        ehManager.targetNode.popper({
+          content: ehManager.popperHandle,
+          popper: {
+            placement: "top", // 상단에 핸들 위치
+            middleware: [offset(5)], // offset 계산 미들웨어
+          },
+        });
+      }
+    },
+  };
+
+  ehManager.initPopperHandle();
+  window.addEventListener("mouseup", ehManager.ehStop);
+  cy.nodes().on("mouseover", ehManager.displayPopperHandle);
+
+  // node를 집었을 때 edge 생성 모드 중단
+  cy.nodes().on("grap", () => ehManager.ehStop.apply(ehManager));
+  // 화면을 줌, pa
+  cy.on("zoom pan", () => ehManager.ehStop.apply(ehManager));
+
+  function initDragAndDropEvent() {
     const endpoint = document.getElementById("endpoint");
     const cyel = document.getElementById("cy");
     endpoint.addEventListener("dragstart", (e) => {
       console.log(e.target);
     });
 
+    // drop 이벤트 적용을 위해 기본동작 방지
     cyel.addEventListener("dragover", (e) => {
       e.preventDefault();
     });
@@ -182,16 +191,24 @@ function main() {
       const graphY = (e.offsetY - pan.y) / zoom;
       const newEndPoint = new EndPoint();
 
-      cy.add({ ...newEndPoint, position: { x: graphX, y: graphY } });
+      cy.add({ ...newEndPoint, position: { x: graphX, y: graphY } }).on(
+        "mouseover",
+        (e) => {
+          ehManager.displayPopperHandle.call(ehManager, e);
+        }
+      );
       cy.$('[group = "endPoint"]')
         .not("#" + newEndPoint.data.id)
         .each((el) => {
           cy.add(new Edge(newEndPoint.data.id, el.id()));
         });
+      // const controllerEdge = new Edge(newEndPoint.data.id, "controller");
+      // controllerEdge.setLineStyle("dashed");
+      // cy.add(controllerEdge);
     });
   }
 
-  drag();
+  initDragAndDropEvent();
 }
 
 main();

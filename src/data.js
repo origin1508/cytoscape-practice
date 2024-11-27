@@ -16,6 +16,14 @@ export class Edge {
       source: source,
       target: target,
     };
+    this.style = {};
+  }
+
+  setLineStyle(lineStyle) {
+    this.style = {
+      "line-style": lineStyle,
+      ...this.style,
+    };
   }
 }
 const endPoints = [{ data: { group: "endPoint", id: "dtr" } }];
@@ -30,7 +38,11 @@ const edges = [
 ];
 
 for (let i = 0; i < endPointCount; i++) {
-  endPoints.push(new EndPoint());
+  const endPoint = new EndPoint();
+  const edge = new Edge(endPoint.data.id, "controller");
+  edge.setLineStyle("dashed");
+  endPoints.push(endPoint);
+  // edges.push(edge);
 }
 
 for (let i = 0; i < endPoints.length - 1; i++) {
@@ -64,6 +76,7 @@ export const style = [
     style: {
       width: "0.5px",
       curveStyle: "haystack",
+      lineDashPattern: [2, 3],
     },
   },
   {
