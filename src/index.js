@@ -109,7 +109,7 @@ function main() {
   console.log("elements not", cy.elements().not("#controller #dtr"));
   console.log("node $", cy.nodes('[group = "endPoint"]'));
 
-  const nav = cy.navigator(navigatorDefaults);
+  // const nav = cy.navigator(navigatorDefaults);
   const eh = cy.edgehandles(ehDefault);
 
   // popper handle
