@@ -1,0 +1,33 @@
+{
+  "name": "cytoscape-demo",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "webpack serve --open",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "css-loader": "^7.1.2",
+    "html-webpack-plugin": "^5.6.3",
+    "style-loader": "^4.0.0",
+    "webpack": "^5.96.1",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.1.0"
+  },
+  "dependencies": {
+    "@floating-ui/dom": "^1.6.12",
+    "cytoscape": "^3.30.3",
+    "cytoscape-d3-force": "^1.1.4",
+    "cytoscape-dagre": "^2.5.0",
+    "cytoscape-demo": "file:",
+    "cytoscape-edgehandles": "^4.0.1",
+    "cytoscape-fcose": "^2.2.0",
+    "cytoscape-navigator": "^2.0.2",
+    "cytoscape-popper": "^4.0.1"
+  }
+}
