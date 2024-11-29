@@ -6,6 +6,7 @@ import navigator from "cytoscape-navigator";
 import edgehandles from "cytoscape-edgehandles";
 import cytoscapePopper from "cytoscape-popper";
 import dagre from "cytoscape-dagre";
+import contextMenus from "cytoscape-context-menus";
 import {
   computePosition,
   flip,
@@ -46,16 +47,15 @@ const ehDefault = {
 };
 
 const dagreLayout = {
-  name: "dagre",
-};
-
-const fcoseLayout = {
-  name: "concentric",
-  // fit: true,
-  // fixedNodeConstraint: [{ nodeId: "dtr", position: { x: 90, y: 100 } }],
-  // packComponents: false,
-  // animate: false,
-  // randomize: false,
+  name: "fcose",
+  randomize: false,
+  animate: true,
+  gravity: 0.2,
+  tile: false,
+  nodeRepulsion: (node) => 50000,
+  edgeElasticity: (edge) => 102,
+  idealEdgeLength: (edge) => 1500,
+  nestingFactor: 10.5,
 };
 
 function main() {
@@ -64,6 +64,7 @@ function main() {
   cytoscape.use(navigator);
   cytoscape.use(edgehandles);
   cytoscape.use(dagre);
+  cytoscape.use(contextMenus);
   cytoscape.use(layoutUtilities);
 
   // popper factory 설정
@@ -98,34 +99,118 @@ function main() {
     elements: elements,
     style: style,
   });
+
   // selector는 jquery 같이 사용이 가능함 => $
   // 기본적으로 CSS 선택자 가능
   // 쿼리를 사용해 data 프로퍼티로 특정 요소들만 선택이 가능함
-  const mainLayout = cy.layout(dagreLayout);
-  mainLayout.run();
-  const boundingBox = cy.nodes().boundingBox();
-  const boundedLayout = {
-    ...fcoseLayout,
-    boundingBox: {
-      x1: boundingBox.x1,
-      y1: boundingBox.y1,
-      x2: boundingBox.x2,
-      y2: boundingBox.y2,
-    },
-  };
+
+  function layout() {
+    const mainLayout = cy.nodes().not("#controller").layout(dagreLayout);
+    mainLayout.run();
+
+    const endPoints = cy.nodes('[group = "endPoint"]');
+    const boundingBox = endPoints.boundingBox();
+
+    console.log(boundingBox);
+  }
+  layout();
+
   // const endPointLayout = cy.nodes().layout(fcoseLayout);
-  const endPointLayout = cy.nodes().not("#controller").layout(boundedLayout);
   // const endPointLayout = cy.nodes('[group = "endPoint"]').layout(fcoseLayout);
   // const endPointLayout = cy.$('[group = "endPoint"]').layout(fcoseLayout);
-  console.log(cy.nodes().boundingBox());
-  console.log(cy.nodes());
-  console.log(cy.nodes('[group = "endPoint"]').boundingBox());
-  console.log(cy.nodes('[group = "endPoint"]'));
   // 선택한 요소들로 layout을 따로 적용이 가능함
 
   // endPointLayout.run();
 
   // const nav = cy.navigator(navigatorDefaults);
+  const menu = cy.contextMenus({
+    evtType: "cxttap",
+    menuItems: [
+      {
+        id: "remove",
+        content: "remove",
+        tooltipText: "remove",
+        selector: "node, edge",
+        onClickFunction: function (e) {
+          const targetId = e.target.data("id");
+          if (targetId === "controller") {
+            alert("컨트롤러는 제거할 수 없습니다.");
+            return;
+          }
+          cy.$(`#${targetId}`).remove();
+        },
+      },
+      {
+        id: "select-all-nodes",
+        content: "select all nodes",
+        selector: "node",
+        coreAsWell: true,
+        show: true,
+        onClickFunction: function (event) {
+          cy.nodes().select();
+
+          menu.hideMenuItem("select-all-nodes");
+          menu.showMenuItem("unselect-all-nodes");
+        },
+      },
+      {
+        id: "color",
+        content: "change color",
+        tooltipText: "change color",
+        selector: "node",
+        hasTrailingDivider: true,
+        submenu: [
+          {
+            id: "color-blue",
+            content: "blue",
+            tooltipText: "blue",
+            onClickFunction: function (event) {
+              let target = event.target || event.cyTarget;
+              target.style("background-color", "blue");
+            },
+            submenu: [
+              {
+                id: "color-light-blue",
+                content: "light blue",
+                tooltipText: "light blue",
+                onClickFunction: function (event) {
+                  let target = event.target || event.cyTarget;
+                  target.style("background-color", "lightblue");
+                },
+              },
+              {
+                id: "color-dark-blue",
+                content: "dark blue",
+                tooltipText: "dark blue",
+                onClickFunction: function (event) {
+                  let target = event.target || event.cyTarget;
+                  target.style("background-color", "darkblue");
+                },
+              },
+            ],
+          },
+          {
+            id: "color-green",
+            content: "green",
+            tooltipText: "green",
+            onClickFunction: function (event) {
+              let target = event.target || event.cyTarget;
+              target.style("background-color", "green");
+            },
+          },
+          {
+            id: "color-red",
+            content: "red",
+            tooltipText: "red",
+            onClickFunction: function (event) {
+              let target = event.target || event.cyTarget;
+              target.style("background-color", "red");
+            },
+          },
+        ],
+      },
+    ],
+  });
 
   // popper handle
   const ehManager = {
@@ -210,7 +295,7 @@ function main() {
 
       const graphX = (e.offsetX - pan.x) / zoom; // 그래프의 x 좌표
       const graphY = (e.offsetY - pan.y) / zoom;
-      const newEndPoint = new EndPoint();
+      const newEndPoint = new EndPoint(3);
 
       cy.add({ ...newEndPoint, position: { x: graphX, y: graphY } }).on(
         "mouseover",

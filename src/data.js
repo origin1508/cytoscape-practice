@@ -1,46 +1,44 @@
 let endPointCount = 5;
 
 export class EndPoint {
-  constructor() {
+  static id = 0;
+
+  constructor(type) {
     this.data = {
       group: "endPoint",
       id: crypto.randomUUID(),
+      type: type,
+      label: `endpoint${EndPoint.id++}`,
     };
   }
 }
 
 export class Edge {
-  constructor(source, target) {
+  constructor(source, target, type) {
     this.data = {
       id: `${source}_${target}`,
       source: source,
       target: target,
-    };
-    this.style = {};
-  }
-
-  setLineStyle(lineStyle) {
-    this.style = {
-      "line-style": lineStyle,
-      ...this.style,
+      type: type,
     };
   }
 }
-const endPoints = [{ data: { group: "endPoint", id: "dtr" } }];
+
+const endPoints = [{ data: { group: "endPoint", id: "dtr", type: 1 } }];
 const edges = [
-  {
-    data: {
-      id: "controller_dtr",
-      source: "controller",
-      target: "dtr",
-    },
-  },
+  // {
+  //   data: {
+  //     id: "controller_dtr",
+  //     source: "controller",
+  //     target: "dtr",
+  //     type: 1,
+  //   },
+  // },
 ];
 
 for (let i = 0; i < endPointCount; i++) {
-  const endPoint = new EndPoint();
-  const edge = new Edge(endPoint.data.id, "controller");
-  edge.setLineStyle("dashed");
+  const endPoint = new EndPoint(3);
+  const edge = new Edge("controller", endPoint.data.id, 1);
   endPoints.push(endPoint);
   // edges.push(edge);
 }
@@ -56,6 +54,8 @@ export const elements = {
     {
       data: {
         id: "controller",
+        type: 0,
+        label: "controller",
       },
     },
     ...endPoints,
@@ -69,14 +69,36 @@ export const style = [
     style: {
       width: "15px",
       height: "15px",
+      backgroundColor: "blue",
+      label: "data(label)", // 커스텀할 수 있도록 html-label-plugin을 사용하는게 좋을 듯
+    },
+  },
+  {
+    selector: "node[type=0]",
+    style: {
+      backgroundColor: "red",
+    },
+  },
+  {
+    selector: "node[type=1]",
+    style: {
+      backgroundColor: "green",
     },
   },
   {
     selector: "edge",
     style: {
       width: "0.5px",
+      opacity: 0.3,
       curveStyle: "haystack",
-      lineDashPattern: [2, 3],
+    },
+  },
+  {
+    selector: "edge[type=1]",
+    style: {
+      width: "0.5px",
+      lineColor: "green",
+      curveStyle: "unbundled-bezier",
     },
   },
   {
@@ -109,18 +131,6 @@ export const style = [
       "line-color": "red",
       "target-arrow-color": "red",
       "source-arrow-color": "red",
-    },
-  },
-  {
-    selector: "#controller",
-    style: {
-      "background-color": "blue",
-    },
-  },
-  {
-    selector: "#dtr",
-    style: {
-      "background-color": "green",
     },
   },
   {
