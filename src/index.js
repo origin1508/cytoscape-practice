@@ -1,4 +1,5 @@
 import cytoscape from "cytoscape";
+import layoutUtilities from "cytoscape-layout-utilities";
 import fcose from "cytoscape-fcose";
 import d3Force from "cytoscape-d3-force";
 import navigator from "cytoscape-navigator";
@@ -50,6 +51,11 @@ const dagreLayout = {
 
 const fcoseLayout = {
   name: "concentric",
+  // fit: true,
+  // fixedNodeConstraint: [{ nodeId: "dtr", position: { x: 90, y: 100 } }],
+  // packComponents: false,
+  // animate: false,
+  // randomize: false,
 };
 
 function main() {
@@ -58,6 +64,7 @@ function main() {
   cytoscape.use(navigator);
   cytoscape.use(edgehandles);
   cytoscape.use(dagre);
+  cytoscape.use(layoutUtilities);
 
   // popper factory 설정
   // middleware 등록
@@ -95,14 +102,28 @@ function main() {
   // 기본적으로 CSS 선택자 가능
   // 쿼리를 사용해 data 프로퍼티로 특정 요소들만 선택이 가능함
   const mainLayout = cy.layout(dagreLayout);
-  const endPointLayout = cy.nodes().layout(fcoseLayout);
-  // const endPointLayout = cy.nodes().not("#controller").layout(fcoseLayout);
+  mainLayout.run();
+  const boundingBox = cy.nodes().boundingBox();
+  const boundedLayout = {
+    ...fcoseLayout,
+    boundingBox: {
+      x1: boundingBox.x1,
+      y1: boundingBox.y1,
+      x2: boundingBox.x2,
+      y2: boundingBox.y2,
+    },
+  };
+  // const endPointLayout = cy.nodes().layout(fcoseLayout);
+  const endPointLayout = cy.nodes().not("#controller").layout(boundedLayout);
   // const endPointLayout = cy.nodes('[group = "endPoint"]').layout(fcoseLayout);
   // const endPointLayout = cy.$('[group = "endPoint"]').layout(fcoseLayout);
-
+  console.log(cy.nodes().boundingBox());
+  console.log(cy.nodes());
+  console.log(cy.nodes('[group = "endPoint"]').boundingBox());
+  console.log(cy.nodes('[group = "endPoint"]'));
   // 선택한 요소들로 layout을 따로 적용이 가능함
-  mainLayout.run();
-  endPointLayout.run();
+
+  // endPointLayout.run();
 
   // const nav = cy.navigator(navigatorDefaults);
 

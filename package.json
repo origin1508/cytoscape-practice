@@ -27,6 +27,7 @@
     "cytoscape-demo": "file:",
     "cytoscape-edgehandles": "^4.0.1",
     "cytoscape-fcose": "^2.2.0",
+    "cytoscape-layout-utilities": "^1.1.1",
     "cytoscape-navigator": "^2.0.2",
     "cytoscape-popper": "^4.0.1"
   }

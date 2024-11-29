@@ -20,6 +20,10 @@
   background-color: #bebebe;
 }
 
+#button-container {
+  width: 30px;
+}
+
 .flex {
   display: flex;
 }
